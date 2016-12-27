@@ -135,6 +135,25 @@ def copy_other(opts, flacdir, outdir):
                     os.makedirs(d)
                 shutil.copy(os.path.join(dirpath, name), d)
 
+def copy_info(opts, flacdir, torrent_dir):
+    disambig = 2
+    if opts.verbose:
+        print('COPYING log and txt files to torrent output dir')
+    for dirpath, dirs, files in os.walk(flacdir, topdown=False):
+        for name in files:
+            if (fnmatch(name.lower(), '*.log')):
+                orig_log = os.path.join(dirpath, name)
+                if os.path.exists(os.path.join(torrent_dir, name)):
+                    root, ext = os.path.splitext(name)
+                    new_name = root + str(disambig) + ext
+                    new_log = os.path.join(torrent_dir, new_name)
+                    disambig += 1
+                else:
+                    new_log = os.path.join(torrent_dir, name)
+                shutil.copyfile(orig_log, new_log)
+            elif (fnmatch(name.lower(), '*.txt')):
+                shutil.copy(os.path.join(dirpath, name), torrent_dir)
+
 class EncoderArg(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super(EncoderArg, self).__init__(option_strings, dest, nargs, **kwargs)
@@ -213,6 +232,7 @@ def setup_parser():
         [['-w', '--overwrite'],  False,     'overwrite files in output dir'],
         [['-b', '--subdirs'],    False,     'create subdirectories within torrent output dir'],
         [['-W', '--copywatch'],  False,     'copy torrent files to rtorrent watch directory'],
+        [['-I', '--copyinfo'],   False,     'copy log and txt files to torrent output dir'],
         [['-d', '--dither'],     dither,    'dither FLACs to 16/44 before encoding'],
         [['-m', '--copyother'],  copyother, 'copy additional files (def: true)'],
         [['-z', '--zeropad'],    zeropad,   'zeropad tracknumbers (def: true)'],
@@ -341,6 +361,8 @@ def main():
                 make_torrent(opts, flacdir)
             if not opts.silent:
                 print('END ORIGINAL FLAC')
+        if opts.copyinfo:
+            copy_info(opts, flacdir, torrent_dir)
 
         for codec in codecs:
             outdir = os.path.basename(flacdir)
