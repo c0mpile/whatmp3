@@ -152,13 +152,14 @@ def escape_percent(pattern):
 def failure(r, msg):
     print("ERROR: %s: %s" % (r, msg), file=sys.stderr)
 
-def make_torrent(opts, target):
+def make_torrent(opts, target, torrent_dir):
+
+    torrent_file = os.path.join(torrent_dir, os.path.basename(target)) + '.torrent'
+
     if opts.verbose:
         print('MAKE: %s.torrent' % os.path.relpath(target))
-    torrent_cmd = "mktorrent -p -a '%s' -o '%s.torrent' '%s' 2>&1" % (
-        opts.tracker, escape_quote(os.path.join(opts.torrent_dir,
-                                   os.path.basename(target))),
-        escape_quote(target)
+    torrent_cmd = "mktorrent -p -a '%s' -o '%s' '%s' 2>&1" % (
+        opts.tracker, escape_quote(torrent_file), escape_quote(target)
     )
     if opts.additional:
         torrent_cmd += ' ' + opts.additional
@@ -203,6 +204,7 @@ def setup_parser():
         [['-C', '--nocue'],      False,     'do not copy cue files after conversion'],
         [['-H', '--nodots'],     False,     'do not copy dot/hidden files after conversion'],
         [['-w', '--overwrite'],  False,     'overwrite files in output dir'],
+        [['-b', '--subdirs'],    False,     'create subdirectories within torrent output dir'],
         [['-d', '--dither'],     dither,    'dither FLACs to 16/44 before encoding'],
         [['-m', '--copyother'],  copyother, 'copy additional files (def: true)'],
         [['-z', '--zeropad'],    zeropad,   'zeropad tracknumbers (def: true)'],
@@ -309,8 +311,12 @@ def main():
     for flacdir in opts.flacdirs:
         flacdir = os.path.abspath(flacdir)
         flacfiles = []
-        if not os.path.exists(opts.torrent_dir):
-            os.makedirs(opts.torrent_dir)
+        if opts.subdirs:
+            torrent_dir = os.path.join(opts.torrent_dir, os.path.basename(flacdir))
+        else:
+            torrent_dir = opts.torrent_dir
+        if not os.path.exists(torrent_dir):
+            os.makedirs(torrent_dir)
         for dirpath, dirs, files in os.walk(flacdir, topdown=False):
             for name in files:
                 if fnmatch(name.lower(), '*.flac'):
@@ -359,7 +365,7 @@ def main():
             if opts.replaygain:
                 replaygain(opts, codec, outdir)
             if opts.output and opts.tracker and not opts.notorrent:
-                make_torrent(opts, outdir)
+                make_torrent(opts, outdir, torrent_dir)
             if not opts.silent:
                 print('END ' + codec + ': %s' % os.path.relpath(flacdir))
 
