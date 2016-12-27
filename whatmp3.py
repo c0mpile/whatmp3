@@ -170,7 +170,14 @@ def make_torrent(opts, target, torrent_dir):
     if opts.verbose:
         print(torrent_cmd)
     r = system(torrent_cmd)
-    if r: failure(r, torrent_cmd)
+    if r:
+        failure(r, torrent_cmd)
+    elif opts.copywatch:
+        data_dir = os.path.dirname(os.path.realpath(target))
+        watch_dir = data_dir.replace('rtorrent/data', 'rtorrent/watch')
+        if not os.path.exists(watch_dir):
+            os.makedirs(watch_dir)
+        shutil.copy(torrent_file, watch_dir)
 
 def replaygain(opts, codec, outdir):
     if opts.verbose:
@@ -205,6 +212,7 @@ def setup_parser():
         [['-H', '--nodots'],     False,     'do not copy dot/hidden files after conversion'],
         [['-w', '--overwrite'],  False,     'overwrite files in output dir'],
         [['-b', '--subdirs'],    False,     'create subdirectories within torrent output dir'],
+        [['-W', '--copywatch'],  False,     'copy torrent files to rtorrent watch directory'],
         [['-d', '--dither'],     dither,    'dither FLACs to 16/44 before encoding'],
         [['-m', '--copyother'],  copyother, 'copy additional files (def: true)'],
         [['-z', '--zeropad'],    zeropad,   'zeropad tracknumbers (def: true)'],
