@@ -143,14 +143,13 @@ def copy_info(opts, flacdir, torrent_dir):
         for name in files:
             if (fnmatch(name.lower(), '*.log')):
                 orig_log = os.path.join(dirpath, name)
-                if os.path.exists(os.path.join(torrent_dir, name)):
+                log_copy = os.path.join(torrent_dir, name)
+                if os.path.exists(log_copy):
                     root, ext = os.path.splitext(name)
                     new_name = root + str(disambig) + ext
-                    new_log = os.path.join(torrent_dir, new_name)
+                    log_copy = os.path.join(torrent_dir, new_name)
                     disambig += 1
-                else:
-                    new_log = os.path.join(torrent_dir, name)
-                shutil.copyfile(orig_log, new_log)
+                shutil.copyfile(orig_log, log_copy)
             elif (fnmatch(name.lower(), '*.txt')):
                 shutil.copy(os.path.join(dirpath, name), torrent_dir)
 
