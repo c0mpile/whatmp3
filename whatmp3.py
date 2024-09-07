@@ -20,9 +20,6 @@ output = os.getcwd()
 # Separate torrent output folder (defaults to output):
 torrent_dir = output
 
-# Do you want to copy additional files (.jpg, .log, etc)?
-copyother = 1
-
 # Do you want to zeropad tracknumbers? (1 => 01, 2 => 02 ...)
 zeropad = 1
 
@@ -31,6 +28,9 @@ dither = 0
 
 # Specify tracker announce URL
 tracker = None
+
+# Additional arguments to mktorrent
+additional = None
 
 # Max number of threads (e.g., Dual-core = 2, Hyperthreaded Dual-core = 4)
 max_threads = multiprocessing.cpu_count()
@@ -233,12 +233,12 @@ def setup_parser():
         [['-W', '--copywatch'],  False,     'copy torrent files to rtorrent watch directory'],
         [['-I', '--copyinfo'],   False,     'copy log and txt files to torrent output dir'],
         [['-d', '--dither'],     dither,    'dither FLACs to 16/44 before encoding'],
-        [['-m', '--copyother'],  copyother, 'copy additional files (def: true)'],
+        [['-M', '--nocopyother'],False,     'do not copy additional files'],
         [['-z', '--zeropad'],    zeropad,   'zeropad tracknumbers (def: true)'],
     ]:
         p.add_argument(*a[0], **{'default': a[1], 'action': 'store_true', 'help': a[2]})
     for a in [
-        [['-a', '--additional'],  None,        'ARGS', 'additional arguments to mktorrent'],
+        [['-a', '--additional'],  additional,  'ARGS', 'additional arguments to mktorrent'],
         [['-t', '--tracker'],     tracker,     'URL',  'tracker URL'],
         [['-o', '--output'],      output,      'DIR',  'set output dir'],
         [['-O', '--torrent-dir'], torrent_dir, 'DIR',  'set independent torrent output dir'],
@@ -389,7 +389,7 @@ def main():
             for t in threads:
                 t.join()
 
-            if opts.copyother:
+            if not opts.nocopyother:
                 copy_other(opts, flacdir, outdir)
             if opts.replaygain:
                 replaygain(opts, codec, outdir)
